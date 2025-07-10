@@ -14,21 +14,46 @@ def preprocessing_txt(input_txt):
     if first_line.endswith(" 님과 카카오톡 대화"):
         partner_name = first_line[: -len(" 님과 카카오톡 대화")].strip()
 
-    # Remove the first 3 lines
+    # Remove the first 3 lines (metadata, date)
     lines = lines[3:]
 
     # Regex pattern to remove time
-    time_pattern = re.compile(r'\[\s*\d{1,2}:\d{2}\s*(AM|PM)\s*\] ')
+    time_pattern = re.compile(r'\[\s*\d{1,2}:\d{2}\s*(AM|PM)\s*\]\s')
+    date_line_pattern = re.compile(r'^-+ .* -+$')
+    speaker_pattern = re.compile(r'^\[[^\]]+\]')
 
-    cleaned_lines = []
+    output_lines = []
+    buffer = ''
 
-    # Remove time part from the message
     for line in lines:
-        cleaned_line = re.sub(time_pattern, '', line)
-        cleaned_lines.append(cleaned_line)
+        stripped = line.strip()
 
+        if not stripped:
+            continue
+
+        if date_line_pattern.match(stripped):
+            if buffer:
+                output_lines.append(buffer)
+                buffer = ''
+            output_lines.append(stripped)
+            continue
+
+        # Remove timestamp
+        without_time = re.sub(time_pattern, '', stripped)
+
+        if speaker_pattern.match(without_time):
+            # New conversation started
+            if buffer:
+                output_lines.append(buffer)
+            buffer = without_time
+        else:
+            buffer += ' ' + without_time
+
+    if buffer:
+        output_lines.append(buffer)
+        
     with open(output_txt, 'w', encoding='utf-8') as f:
-        f.writelines(cleaned_lines)
+        f.write('\n'.join(output_lines))
 
     print('-----[PREPROCESS]-----')
     print(f'Preprocessed txt file saved as: {output_txt}')
