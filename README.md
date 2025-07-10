@@ -8,6 +8,7 @@
    ```bash
    python main.py file_name.txt
    ```
+4. The txt file must be extracted while KakaoTalk is set to **English.**
 
 ## 🛠️ Development Environment
 - **IDE**: Visual Studio Code
