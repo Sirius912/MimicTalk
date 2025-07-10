@@ -1,11 +1,16 @@
-import os
-from change_filename import change_filename
+import argparse
 from preprocess import preprocessing_txt
 
-# in the case of loading a KakaoTalk txt file and using it unchanged
-original_path = r'C:\Users\kangj\MimicTalk\KakaoTalk_20250709_1356_12_268_prof.txt'
+parser = argparse.ArgumentParser()
+parser.add_argument('input_file', type=str, help="File name to read")
+args = parser.parse_args()
+input_file = args.input_file
 
-original_file, input_file, input_path = change_filename(original_path)
+try:
+    with open(input_file, 'r', encoding='utf-8') as file:
+        content = file.read()
+        print(content)
+except FileNotFoundError:
+    print(f'{input_file} not found.')
 
 partner_name = preprocessing_txt(input_file, 'partner_name.txt')
-

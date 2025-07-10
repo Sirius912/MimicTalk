@@ -3,7 +3,6 @@ def preprocessing_txt(input_file, output_file):
         lines = f.readlines()
         first_line = lines[0].strip()
 
-
     # save partner name
     partner_name = None
 
@@ -13,6 +12,6 @@ def preprocessing_txt(input_file, output_file):
     with open(output_file, 'w', encoding='utf-8') as f:
         f.writelines(output_file)
 
-    print(f'[PRE]Preprocessing complete! File saved as: {output_file}')
+    print(f'[PREPROCESS] Preprocessing complete! File saved as: {output_file}')
 
     return partner_name
