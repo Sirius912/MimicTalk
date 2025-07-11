@@ -17,7 +17,7 @@ def preprocessing_txt(input_txt):
     # Remove the first 3 lines (metadata, date)
     lines = lines[3:]
 
-    # Regex pattern to detect time, date line, speaker
+    # Define patterns to filter out time, date line, speaker
     time_pattern = re.compile(r'\[\s*\d{1,2}:\d{2}\s*(AM|PM)\s*\]\s')
     date_line_pattern = re.compile(r'^-+ .* -+$')
     speaker_pattern = re.compile(r'^\[[^\]]+\]')
@@ -34,33 +34,27 @@ def preprocessing_txt(input_txt):
         # Detect date line and store buffer to output_lines
         if date_line_pattern.match(line):
             if buffer:
-                output_lines.append(buffer)
+                if not check_message(buffer): # True: detected special cases
+                    output_lines.append(buffer)
                 buffer = ''
             output_lines.append(line)
             continue
 
-        # Remove timestamp
-        without_time = re.sub(time_pattern, '', line)
+        # Remove timestamp. [speacker] [time] message -> [speaker] message
+        line = re.sub(time_pattern, '', line)
 
-        if speaker_pattern.match(without_time):
-            # Extract message (excluding speaker)
-            message = re.match(r'^\[[^\]]+\]\s*(.*)', buffer)
-            if message:
-                message = message.group(1)
-
-                # Remove messages such as photos, videos, and emojis
-                if re.fullmatch(r'(사진|동영상|이모티콘)(\s*\d+장)?', message.strip()):
-                    buffer = ''
-
+        if speaker_pattern.match(line):
             if buffer:
-                output_lines.append(buffer)
-            buffer = without_time
-        else:
-            buffer += ' ' + without_time
+                if not check_message(buffer): # True: detected special cases
+                    output_lines.append(buffer)
+            buffer = line # Store current line to buffer
+        else: # When the message is not finished, i.e., written across multiple lines using \n
+            buffer += ' ' + line
         
     if buffer:
-        output_lines.append(buffer)
-        
+        if not check_message(buffer):
+            output_lines.append(buffer)
+
     # Write the result to the output txt file
     with open(output_txt, 'w', encoding='utf-8') as f:
         f.write('\n'.join(output_lines))
@@ -73,6 +67,31 @@ def preprocessing_txt(input_txt):
     print('-----[PREPROCESS COMPLETE]-----\n')
 
     return partner_name, first_line
+
+def check_message(msg):
+    # Extract message (excluding speaker)
+    message = re.match(r'^\[[^\]]+\]\s*(.*)', msg)
+    if not message:
+        return False
+    
+    message = message.group(1).strip()
+
+    # Remove messages such as photos, videos, and emojis
+    if re.fullmatch(r'(사진|동영상|이모티콘)(\s*\d+장)?', message.strip()):
+        return True
+
+    # Define patterns to filter out remittance-related messages
+    patterns = [
+        re.compile(r'[\d,]+원을 보냈어요. 송금 받기 전까지 보낸 분은 내역 상세화면에서 취소할 수 있어요.'),
+        re.compile(r'[\d,]+원을 받았어요. 받은 카카오페이머니는 송금 및 온/오프라인 결제도 가능해요.'),
+        re.compile(r'[\d,]+원 자동환불 예정 내일 낮 12시에 자동 환불될 예정입니다. 송금 받기를 완료해 주세요.')
+    ]
+
+    for pattern in patterns:
+        if pattern.fullmatch(message):
+            return True
+
+    return False
 
 def convert_txt_to_json(output_txt):
     output_json = 'preprocessed.json'
