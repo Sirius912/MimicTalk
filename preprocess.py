@@ -37,7 +37,6 @@ def preprocessing_txt(input_txt):
                 if not check_message(buffer): # True: detected special cases
                     output_lines.append(buffer)
                 buffer = ''
-            output_lines.append(line)
             continue
 
         # Remove timestamp. [speacker] [time] message -> [speaker] message
@@ -103,52 +102,26 @@ def convert_txt_to_json(output_txt):
     with open(output_txt, 'r', encoding='utf-8') as f:
         lines = f.readlines()
 
-    # Initialize variables
-    chat_blocks = []
-    current_block = None
+    # Initialize list to store all messages
     message_block = []
 
-    # Regex pattern to detect the data separators
-    date_pattern = re.compile(r'^---------------\s*(.*?)\s*---------------$')
-
-    # Use re.DOTALL to allow '.' to match newline characters
+    # Pattern to match [sender] message
     message_pattern = re.compile(r'\[(.*?)\]\s*(.*)')
 
     for line in lines:
         line = line.strip()
 
-        date_match = date_pattern.match(line)
-
-        if date_pattern.match(line):
-            # Save the current block before starting a new date
-            if current_block:
-                current_block['messages'] = message_block
-                chat_blocks.append(current_block)
-
-            current_block = {'date': date_match.group(1), 'messages': []}
-            message_block = []  # reset message block
-        elif line:
-            # Match messages in the format [sender] message
-            message_match = message_pattern.match(line)
-
-            if message_match:
-                sender = message_match.group(1)
-                message = message_match.group(2).strip()
-                message_block.append({'sender': sender, 'message': message})
-    
-    # Save the last chat block
-    if current_block:
-        current_block['messages'] = message_block
-        chat_blocks.append(current_block)
-
-    # Remove empty chat block
-    filtered_blocks = []
-    for block in chat_blocks:
-        if block.get('messages') and len(block['messages']) >0:
-            filtered_blocks.append(block)
+        match = message_pattern.match(line)
+        if match:
+            sender = match.group(1)
+            message = match.group(2)
+            message_block.append({
+                'sender': sender,
+                'message': message
+            })
 
     # Write the result to the output JSON file
     with open(output_json, 'w', encoding='utf-8') as json_file:
-        json.dump(filtered_blocks, json_file, ensure_ascii=False, indent=4)
+        json.dump(message_block, json_file, ensure_ascii=False, indent=4)
 
     print(f'Conversion complete! File saved as {output_json}')
