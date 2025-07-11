@@ -17,41 +17,51 @@ def preprocessing_txt(input_txt):
     # Remove the first 3 lines (metadata, date)
     lines = lines[3:]
 
-    # Regex pattern to remove time
+    # Regex pattern to detect time, date line, speaker
     time_pattern = re.compile(r'\[\s*\d{1,2}:\d{2}\s*(AM|PM)\s*\]\s')
     date_line_pattern = re.compile(r'^-+ .* -+$')
     speaker_pattern = re.compile(r'^\[[^\]]+\]')
 
     output_lines = []
-    buffer = ''
+    buffer = '' # Temporarily stores the current speaker's message
 
     for line in lines:
-        stripped = line.strip()
+        line = line.strip()
 
-        if not stripped:
+        if not line:
             continue
 
-        if date_line_pattern.match(stripped):
+        # Detect date line and store buffer to output_lines
+        if date_line_pattern.match(line):
             if buffer:
                 output_lines.append(buffer)
                 buffer = ''
-            output_lines.append(stripped)
+            output_lines.append(line)
             continue
 
         # Remove timestamp
-        without_time = re.sub(time_pattern, '', stripped)
+        without_time = re.sub(time_pattern, '', line)
 
         if speaker_pattern.match(without_time):
-            # New conversation started
+            # Extract message (excluding speaker)
+            message = re.match(r'^\[[^\]]+\]\s*(.*)', buffer)
+            if message:
+                message = message.group(1)
+
+                # Remove messages such as photos, videos, and emojis
+                if re.fullmatch(r'(사진|동영상|이모티콘)(\s*\d+장)?', message.strip()):
+                    buffer = ''
+
             if buffer:
                 output_lines.append(buffer)
             buffer = without_time
         else:
             buffer += ' ' + without_time
-
+        
     if buffer:
         output_lines.append(buffer)
         
+    # Write the result to the output txt file
     with open(output_txt, 'w', encoding='utf-8') as f:
         f.write('\n'.join(output_lines))
 
@@ -79,25 +89,23 @@ def convert_txt_to_json(output_txt):
     date_pattern = re.compile(r'^---------------\s*(.*?)\s*---------------$')
 
     # Use re.DOTALL to allow '.' to match newline characters
-    message_pattern = re.compile(r'\[(.*?)\]\s*(.*)', re.DOTALL)
+    message_pattern = re.compile(r'\[(.*?)\]\s*(.*)')
 
     for line in lines:
         line = line.strip()
 
-        # Match date separator
         date_match = date_pattern.match(line)
 
-        if date_match:
-            # Save the current block before starting a new line
+        if date_pattern.match(line):
+            # Save the current block before starting a new date
             if current_block:
                 current_block['messages'] = message_block
                 chat_blocks.append(current_block)
 
-            # Start a new block for the new date
             current_block = {'date': date_match.group(1), 'messages': []}
             message_block = []  # reset message block
         elif line:
-            # Match messages in the format [sender] [time] message
+            # Match messages in the format [sender] message
             message_match = message_pattern.match(line)
 
             if message_match:
@@ -105,6 +113,7 @@ def convert_txt_to_json(output_txt):
                 message = message_match.group(2).strip()
                 message_block.append({'sender': sender, 'message': message})
     
+    # Save the last chat block
     if current_block:
         current_block['messages'] = message_block
         chat_blocks.append(current_block)
