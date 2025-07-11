@@ -1,6 +1,6 @@
-import os
 import argparse
 from preprocess import preprocessing_txt
+from text_generation import text_generation
 
 parser = argparse.ArgumentParser()
 parser.add_argument('input_txt', type=str, help="File name to read")
@@ -12,8 +12,10 @@ try:
         # Preprocess input file
         partner_name, title = preprocessing_txt(input_txt)
 
-        print(title, '생성')
+        question = 'Type your question'
+        print('Question:', question)
+        
+        text_generation(input_txt, partner_name, question)
 
 except FileNotFoundError:
-    print(f'{input_txt} not found.')
-
+    print(f'[ERROR] {input_txt} not found.')
