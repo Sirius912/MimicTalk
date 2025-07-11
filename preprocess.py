@@ -91,6 +91,10 @@ def check_message(msg):
         if pattern.fullmatch(message):
             return True
 
+    # Remove file transfer messages
+    if re.search(r'파일: ', message.strip()):
+        return True
+
     return False
 
 def convert_txt_to_json(output_txt):
@@ -137,8 +141,14 @@ def convert_txt_to_json(output_txt):
         current_block['messages'] = message_block
         chat_blocks.append(current_block)
 
+    # Remove empty chat block
+    filtered_blocks = []
+    for block in chat_blocks:
+        if block.get('messages') and len(block['messages']) >0:
+            filtered_blocks.append(block)
+
     # Write the result to the output JSON file
     with open(output_json, 'w', encoding='utf-8') as json_file:
-        json.dump(chat_blocks, json_file, ensure_ascii=False, indent=4)
+        json.dump(filtered_blocks, json_file, ensure_ascii=False, indent=4)
 
     print(f'Conversion complete! File saved as {output_json}')
