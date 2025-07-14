@@ -45,7 +45,7 @@ def text_generation(dialogue_path, partner_name, question):
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": f"너는 '{partner_name}'의 말투를 흉내 내는 AI야."},
+            {"role": "system", "content": f"너는 '{partner_name}'의 말투를 완벽히 흉내 내는 AI야."},
             {"role": "user", "content": prompt}
         ]
     )
@@ -54,15 +54,16 @@ def text_generation(dialogue_path, partner_name, question):
     total_tokens = response.usage.total_tokens
 
     # Save log
-    save_log('gpt_log.txt', question, answer, total_tokens)
+    save_log('gpt_log.txt', partner_name, question, answer, total_tokens)
 
     print('Answer:', answer)
 
-def save_log(log_path, question, answer, tokens):
+def save_log(log_path, partner_name, question, answer, tokens):
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     with open(log_path, 'a', encoding='utf-8') as f:
         f.write(f"[{now}]\n")
+        f.write(f"Partner name: {partner_name}\n")
         f.write(f"Question: {question}\n")
         f.write(f"Answer: {answer}\n")
         f.write(f"Tokens used: {tokens} (prompt + completion)\n")

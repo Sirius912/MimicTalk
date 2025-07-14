@@ -10,9 +10,9 @@ input_txt = args.input_txt
 try:
     with open(input_txt, 'r', encoding='utf-8') as f:
         # Preprocess input file
-        partner_name, title = preprocessing_txt(input_txt)
+        partner_name, title, input_txt = preprocessing_txt(input_txt)
 
-        question = 'Type your question'
+        question = 'Type your question here'
         print('Question:', question)
         
         text_generation(input_txt, partner_name, question)

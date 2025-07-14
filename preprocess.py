@@ -65,7 +65,7 @@ def preprocessing_txt(input_txt):
 
     print('-----[PREPROCESS COMPLETE]-----\n')
 
-    return partner_name, first_line
+    return partner_name, first_line, output_txt
 
 def check_message(msg):
     # Extract message (excluding speaker)

@@ -2,6 +2,7 @@
 __pycache__/
 
 prof.txt
+jiye.txt
 preprocessed.txt
 preprocessed.json
 gpt_log.txt
