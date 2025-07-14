@@ -2,7 +2,7 @@ import re
 import json
 
 def preprocessing_txt(input_txt):
-    output_txt = 'preprocessed.txt'
+    output_txt = 'txt_files/preprocessed.txt'
 
     with open(input_txt, 'r', encoding='utf-8') as f:
         lines = f.readlines()
@@ -97,7 +97,7 @@ def check_message(msg):
     return False
 
 def convert_txt_to_json(output_txt):
-    output_json = 'preprocessed.json'
+    output_json = 'txt_files/preprocessed.json'
 
     with open(output_txt, 'r', encoding='utf-8') as f:
         lines = f.readlines()

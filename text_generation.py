@@ -54,16 +54,21 @@ def text_generation(dialogue_path, partner_name, question):
     total_tokens = response.usage.total_tokens
 
     # Save log
-    save_log('gpt_log.txt', partner_name, question, answer, total_tokens)
+    save_log('logs', partner_name, question, answer, total_tokens)
 
     print('Answer:', answer)
 
-def save_log(log_path, partner_name, question, answer, tokens):
+def save_log(base_dir, partner_name, question, answer, tokens):
+    # create log directory
+    os.makedirs(base_dir, exist_ok=True)
+
+    filename = f"{partner_name}_log.txt"
+    log_path = os.path.join(base_dir, filename)
+
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     with open(log_path, 'a', encoding='utf-8') as f:
         f.write(f"[{now}]\n")
-        f.write(f"Partner name: {partner_name}\n")
         f.write(f"Question: {question}\n")
         f.write(f"Answer: {answer}\n")
         f.write(f"Tokens used: {tokens} (prompt + completion)\n")
