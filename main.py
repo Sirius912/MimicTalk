@@ -12,10 +12,10 @@ try:
         # Preprocess input file
         partner_name, title, input_txt = preprocessing_txt(input_txt)
 
-        question = 'Type your question here'
+        question = '오늘 회의 시간 알 수 있을까요?'
         print('Question:', question)
         
-        text_generation(input_txt, partner_name, question)
+        # text_generation(input_txt, partner_name, question)
 
 except FileNotFoundError:
     print(f'[ERROR] {input_txt} not found.')

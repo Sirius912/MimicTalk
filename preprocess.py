@@ -14,6 +14,9 @@ def preprocessing_txt(input_txt):
     if first_line.endswith(" 님과 카카오톡 대화"):
         partner_name = first_line[: -len(" 님과 카카오톡 대화")].strip()
 
+    # Save my name
+    my_name = extract_my_name(lines, partner_name)
+
     # Remove the first 3 lines (metadata, date)
     lines = lines[3:]
 
@@ -46,6 +49,17 @@ def preprocessing_txt(input_txt):
             if buffer:
                 if not check_message(buffer): # True: detected special cases
                     output_lines.append(buffer)
+            # print('=', line)
+            
+            # speaker_name = re.compile(r'^\[([^\]]+)\]')
+            # match = speaker_name.match(line.strip())
+            # if match:
+            #     speaker = match.group(1)
+            #     if speaker != partner_name:
+            #         line = ''
+            #     else:
+            #         line = re.sub(speaker_pattern, '', line).strip()
+
             buffer = line # Store current line to buffer
         else: # When the message is not finished, i.e., written across multiple lines using \n
             buffer += ' ' + line
@@ -66,6 +80,20 @@ def preprocessing_txt(input_txt):
     print('-----[PREPROCESS COMPLETE]-----\n')
 
     return partner_name, first_line, output_txt
+
+def extract_my_name(lines, partner_name):
+    my_name = None
+    speaker_name = re.compile(r'^\[([^\]]+)\]')
+
+    for line in lines:
+        match = speaker_name.match(line.strip())
+        if match:
+            speaker = match.group(1)
+            if speaker != partner_name:
+                my_name = speaker
+                break
+
+    return my_name
 
 def check_message(msg):
     # Extract message (excluding speaker)
