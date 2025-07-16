@@ -14,9 +14,6 @@ def preprocessing_txt(input_txt):
     if first_line.endswith(" 님과 카카오톡 대화"):
         partner_name = first_line[: -len(" 님과 카카오톡 대화")].strip()
 
-    # Save my name
-    my_name = extract_my_name(lines, partner_name)
-
     # Remove the first 3 lines (metadata, date)
     lines = lines[3:]
 
@@ -31,15 +28,10 @@ def preprocessing_txt(input_txt):
     for line in lines:
         line = line.strip()
 
-        if not line:
+        if not line: # A line is empty
             continue
-
-        # Detect date line and store buffer to output_lines
-        if date_line_pattern.match(line):
-            if buffer:
-                if not check_message(buffer): # True: detected special cases
-                    output_lines.append(buffer)
-                buffer = ''
+        elif date_line_pattern.match(line): # Remove date line
+            line = ''
             continue
 
         # Remove timestamp. [speacker] [time] message -> [speaker] message
@@ -49,51 +41,35 @@ def preprocessing_txt(input_txt):
             if buffer:
                 if not check_message(buffer): # True: detected special cases
                     output_lines.append(buffer)
-            # print('=', line)
-            
-            # speaker_name = re.compile(r'^\[([^\]]+)\]')
-            # match = speaker_name.match(line.strip())
-            # if match:
-            #     speaker = match.group(1)
-            #     if speaker != partner_name:
-            #         line = ''
-            #     else:
-            #         line = re.sub(speaker_pattern, '', line).strip()
-
             buffer = line # Store current line to buffer
         else: # When the message is not finished, i.e., written across multiple lines using \n
             buffer += ' ' + line
-        
+
     if buffer:
         if not check_message(buffer):
             output_lines.append(buffer)
 
-    # Write the result to the output txt file
-    with open(output_txt, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(output_lines))
+    final_output = []
 
-    print('-----[PREPROCESS]-----')
-    print(f'Preprocessed txt file saved as: {output_txt}')
-
-    convert_txt_to_json(output_txt)
-
-    print('-----[PREPROCESS COMPLETE]-----\n')
-
-    return partner_name, first_line, output_txt
-
-def extract_my_name(lines, partner_name):
-    my_name = None
-    speaker_name = re.compile(r'^\[([^\]]+)\]')
-
-    for line in lines:
+    # Keep only the lines spoken by partner_name
+    for line in output_lines:
+        speaker_name = re.compile(r'^\[([^\]]+)\]')
         match = speaker_name.match(line.strip())
         if match:
             speaker = match.group(1)
-            if speaker != partner_name:
-                my_name = speaker
-                break
+            if speaker == partner_name:
+                line = re.sub(speaker_pattern, '', line).strip()
+                final_output.append(line)
+        
+    # Write the result to the output txt file
+    with open(output_txt, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(final_output))
 
-    return my_name
+    print('-----[PREPROCESS]-----')
+    print(f'Preprocessed txt file saved as: {output_txt}')
+    print('-----[PREPROCESS COMPLETE]-----\n')
+
+    return partner_name, first_line, output_txt
 
 def check_message(msg):
     # Extract message (excluding speaker)
@@ -123,33 +99,3 @@ def check_message(msg):
         return True
 
     return False
-
-def convert_txt_to_json(output_txt):
-    output_json = 'txt_files/preprocessed.json'
-
-    with open(output_txt, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-
-    # Initialize list to store all messages
-    message_block = []
-
-    # Pattern to match [sender] message
-    message_pattern = re.compile(r'\[(.*?)\]\s*(.*)')
-
-    for line in lines:
-        line = line.strip()
-
-        match = message_pattern.match(line)
-        if match:
-            sender = match.group(1)
-            message = match.group(2)
-            message_block.append({
-                'sender': sender,
-                'message': message
-            })
-
-    # Write the result to the output JSON file
-    with open(output_json, 'w', encoding='utf-8') as json_file:
-        json.dump(message_block, json_file, ensure_ascii=False, indent=4)
-
-    print(f'Conversion complete! File saved as {output_json}')
