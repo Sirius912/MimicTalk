@@ -83,19 +83,27 @@ def check_message(msg):
     if re.fullmatch(r'(사진|동영상|이모티콘)(\s*\d+장)?', message.strip()):
         return True
 
-    # Define patterns to filter out remittance-related messages
     patterns = [
+        # Define patterns to filter out remittance-related messages
         re.compile(r'[\d,]+원을 보냈어요. 송금 받기 전까지 보낸 분은 내역 상세화면에서 취소할 수 있어요.'),
         re.compile(r'[\d,]+원을 받았어요. 받은 카카오페이머니는 송금 및 온/오프라인 결제도 가능해요.'),
-        re.compile(r'[\d,]+원 자동환불 예정 내일 낮 12시에 자동 환불될 예정입니다. 송금 받기를 완료해 주세요.')
+        re.compile(r'[\d,]+원 자동환불 예정 내일 낮 12시에 자동 환불될 예정입니다. 송금 받기를 완료해 주세요.'),
+        re.compile('송금봉투가 도착했어요. 송금 받기 전까지 보낸 분은 내역 상세화면에서 취소할 수 있어요.'),
+        re.compile('송금봉투를 받았어요. 받은 카카오페이머니는 송금 및 온/오프라인 결제도 가능해요.'),
+        re.compile(r'[\d,]+원 송금요청 메세지가 도착했어요. 보내기를 눌러 바로 송금하거나, 계좌번호를 복사해 송금해 보세요.'),
+        re.compile(r'정산을 시작합니다! 요청인원 : \d+명'),
+
+        # To filter deleted messages
+        re.compile('삭제된 메시지입니다.')
     ]
 
     for pattern in patterns:
-        if pattern.fullmatch(message):
+        if pattern.search(message):
             return True
 
     # Remove file transfer messages
     if re.search(r'파일: ', message.strip()):
         return True
+
 
     return False
